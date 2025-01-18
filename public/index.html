@@ -1,0 +1,38 @@
+<!-- login.html -->
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ログイン</title>
+</head>
+
+<body>
+    <h1>ユーザーログイン</h1>
+    <button id="loginA">Aユーザーとしてログイン</button>
+    <button id="loginB">Bユーザーとしてログイン</button>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        // Aユーザーとしてログイン
+        document.getElementById('loginA').addEventListener('click', () => {
+            socket.emit('login', { userType: 'A' });
+            localStorage.setItem('userType', 'A');  // userTypeをlocalStorageに保存
+            window.location.href = 'seatSelection.html';  // ログイン後に座席選択画面に遷移
+        });
+
+        // Bユーザーとしてログイン
+        document.getElementById('loginB').addEventListener('click', () => {
+            socket.emit('login', { userType: 'B' });
+            localStorage.setItem('userType', 'B');  // userTypeをlocalStorageに保存
+            window.location.href = 'seatSelection.html';  // ログイン後に座席選択画面に遷移
+        });
+    </script>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

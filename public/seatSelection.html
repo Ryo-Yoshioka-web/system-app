@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>席選択とグループ分け</title>
+    <style>
+        .seat {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            margin: 5px;
+            text-align: center;
+            line-height: 40px;
+            border: 1px solid #000;
+            cursor: pointer;
+        }
+
+        .selected {
+            background-color: #87CEFA;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+
+        .assigned {
+            background-color: #d3d3d3;
+            cursor: not-allowed;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 50px auto 0;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+
+        #closeModal {
+            float: right;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .course-status-modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .course-status-modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%;
+        }
+
+        #closeCourseModal {
+            float: right;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .course-list {
+            margin-top: 10px;
+        }
+
+        .course-item {
+            margin: 5px 0;
+        }
+
+        .notification {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px 20px;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+
+        .seat.assigned.timed-out {
+            background-color: red !important;
+        }
+
+        #groupAssignments {
+            margin-top: 40px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            gap: 20px 0;
+            /* 要素が親要素の幅に収まらない場合に折り返し */
+        }
+
+        #groupAssignments div {
+            border: 1px solid black;
+            width: 45%;
+            /* 2つの要素が横並びに収まる幅 */
+            padding: 20px;
+            box-sizing: border-box;
+            /* 幅にパディングやマージンを含める */
+        }
+
+        #groupAssignments div:last-child {
+            margin-right: 0;
+            /* 最後の要素には右側のマージンを適用しない */
+        }
+
+        #courseStatusList {
+            margin-top: 0px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            gap: 20px 0;
+            /* 要素が親要素の幅に収まらない場合に折り返し */
+        }
+
+        #courseStatusList div {
+            width: 30%;
+            /* 2つの要素が横並びに収まる幅 */
+            padding: 10px;
+            box-sizing: border-box;
+            /* 幅にパディングやマージンを含める */
+        }
+
+        button {
+            font-size: 16px;
+            margin-right: 10px;
+        }
+
+        select {
+            font-size: 18px !important;
+        }
+
+        .main-seats {
+            width: 50%;
+            margin: 0 auto;
+            justify-content: space-around;
+        }
+
+        .number-seats {
+            width: 80%;
+            justify-content: space-between;
+            margin: 0 auto;
+        }
+
+
+        .number-seats,
+        .main-seats {
+            display: flex;
+        }
+
+        #seatContainer {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .seat-row {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .seat {
+            width: 60px;
+            height: 60px;
+            margin: 15px;
+            border: 1px solid #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+    </style>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+    <div id="userInfo"></div>
+    <div id="seatContainer"></div>
+    <select id="groupSelect">
+        <option value="">グループを選択</option>
+        <option value="Group1">グループ1</option>
+        <option value="Group2">グループ2</option>
+        <option value="Group3">グループ3</option>
+    </select>
+    <button onclick="assignToGroup()">グループに割り当て</button>
+    <div id="groupAssignments"></div>
+
+    <div id="courseModal" class="modal">
+        <div class="modal-content">
+            <span id="closeModal" style="cursor: pointer;">&times;</span>
+            <h3>コースを割り当て</h3>
+            <div id="courseInputs"></div>
+            <button onclick="assignCourses()">コースを割り当て</button>
+        </div>
+    </div>
+
+    <!-- コース状況確認モーダル -->
+    <!-- コース確認用のモーダル -->
+    <div id="courseStatusModal" class="modal">
+        <div class="modal-content">
+            <span id="closeCourseStatusModal" style="cursor: pointer;">&times;</span>
+            <h3>コース選択状況</h3>
+            <div id="courseStatusList"></div>
+        </div>
+    </div>
+
+
+    <script src="script.js"></script>
+</body>
+
+</html>
