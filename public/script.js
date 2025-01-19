@@ -11,17 +11,23 @@ let completedDishes = {};
 let groupColors = {};
 
 const fixedGroupColors = {
-    Group1: '#add8e6', // 薄い青
-    Group2: '#90ee90', // 薄い緑
-    Group3: '#ffcccb', // 薄い赤
-    Group4: '#ffffe0', // 薄い黄色
-    Group5: '#dda0dd', // 薄い紫
-    Group6: '#87cefa', // スカイブルー
-    Group7: '#f0e68c', // カーキ
-    Group8: '#ffc0cb', // ピンク
-    Group9: '#e6e6fa', // 薄いラベンダー
+    Group1: '#add8e6',  // 薄い青
+    Group2: '#90ee90',  // 薄い緑
+    Group3: '#ffcccb',  // 薄い赤
+    Group4: '#ffffe0',  // 薄い黄色
+    Group5: '#dda0dd',  // 薄い紫
+    Group6: '#87cefa',  // スカイブルー
+    Group7: '#f0e68c',  // カーキ
+    Group8: '#ffc0cb',  // ピンク
+    Group9: '#e6e6fa',  // 薄いラベンダー
     Group10: '#98fb98', // 薄いパステルグリーン
+    Group11: '#ffdab9', // ピーチパフ
+    Group12: '#b0e0e6', // パウダーブルー
+    Group13: '#ffe4b5', // モカ
+    Group14: '#d8bfd8', // シスリアン
+    Group15: '#bc8f8f', // ロージーブラウン
 };
+
 
 
 const userType = localStorage.getItem('userType');
