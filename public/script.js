@@ -10,6 +10,19 @@ let dishTimers = {};
 let completedDishes = {};
 let groupColors = {};
 
+const fixedGroupColors = {
+    Group1: '#add8e6', // 薄い青
+    Group2: '#90ee90', // 薄い緑
+    Group3: '#ffcccb', // 薄い赤
+    Group4: '#ffffe0', // 薄い黄色
+    Group5: '#dda0dd', // 薄い紫
+    Group6: '#87cefa', // スカイブルー
+    Group7: '#f0e68c', // カーキ
+    Group8: '#ffc0cb', // ピンク
+    Group9: '#e6e6fa', // 薄いラベンダー
+    Group10: '#98fb98', // 薄いパステルグリーン
+};
+
 
 const userType = localStorage.getItem('userType');
 
@@ -198,7 +211,6 @@ function openCourseModal(group) {
                 <option value="KIDS">KIDS</option>
             </select>
             <label>アレルギー:</label>
-            <label><input type="checkbox" name="allergy-${seat}" value="なし" onclick="handleAllergySelection(this, '${seat}')"> なし</label>
             <label><input type="checkbox" name="allergy-${seat}" value="生卵" onclick="handleAllergySelection(this, '${seat}')"> 生卵</label>
             <label><input type="checkbox" name="allergy-${seat}" value="小麦" onclick="handleAllergySelection(this, '${seat}')"> 小麦</label>
             <label><input type="checkbox" name="allergy-${seat}" value="牛乳" onclick="handleAllergySelection(this, '${seat}')"> 牛乳</label>
@@ -224,18 +236,28 @@ function openCourseModal(group) {
 
 function handleAllergySelection(clickedCheckbox, seat) {
     const allergyCheckboxes = document.querySelectorAll(`input[name="allergy-${seat}"]`);
+    const seatElement = Array.from(Tableseats).find(seatDiv => seatDiv.textContent === seat);
 
     if (clickedCheckbox.value === "なし" && clickedCheckbox.checked) {
-        // 「なし」を選択した場合、他のチェックボックスを解除
+        // 「なし」を選択した場合、他のチェックボックスを解除し、スタイルをリセット
         allergyCheckboxes.forEach(checkbox => {
             if (checkbox !== clickedCheckbox) checkbox.checked = false;
         });
+        if (seatElement) {
+            seatElement.classList.remove('allergy-marked'); // 線を削除
+            seatElement.style.color = ''; // 赤文字を解除
+        }
     } else if (clickedCheckbox.value !== "なし") {
-        // 他のアレルギー項目を選択した場合、「なし」を解除
+        // 他のアレルギー項目を選択した場合、「なし」を解除し、スタイルを適用
         const noneCheckbox = Array.from(allergyCheckboxes).find(checkbox => checkbox.value === "なし");
         if (noneCheckbox) noneCheckbox.checked = false;
+        if (seatElement) {
+            seatElement.classList.add('allergy-marked'); // 線を追加
+            seatElement.style.color = 'red'; // 赤文字を設定
+        }
     }
 }
+
 
 function assignCourses() {
     const selects = document.querySelectorAll('#courseInputs select');
@@ -335,7 +357,7 @@ function updateGroupAssignmentsDisplay(assignments) {
         groupDiv.appendChild(assignment);
 
         if (!groupColors[group]) {
-            groupColors[group] = getRandomColor();
+            groupColors[group] = fixedGroupColors[group]
         }
         groupDiv.style.backgroundColor = groupColors[group];
 
@@ -410,31 +432,51 @@ function getRandomColor() {
 
 // グループごとの色を保持するオブジェクト
 
-
 function updateSeatStyles() {
     Array.from(Tableseats).forEach(seat => {
         const seatLetter = seat.textContent;
+
         if (assignedSeats[seatLetter]) {
             const group = assignedSeats[seatLetter];
             seat.classList.add('assigned');
 
+            // グループ名に「あり」が含まれる場合は固定色を適用
             if (group.includes('あり')) {
-                seat.style.backgroundColor = '#ffff0061';
+                seat.style.backgroundColor = '#ffff0061'; // 薄い黄色
             } else {
+                // グループごとの固定色を適用
                 if (!groupColors[group]) {
-                    groupColors[group] = getRandomColor();
+                    groupColors[group] = fixedGroupColors[group] || getRandomColor();
                 }
                 seat.style.backgroundColor = groupColors[group];
             }
 
             seat.onclick = null; // 割り当て済み席はクリック不可
         } else {
+            // 割り当てがない場合はスタイルをリセット
             seat.classList.remove('assigned');
             seat.style.backgroundColor = ''; // 元のスタイルに戻す
             seat.onclick = () => toggleSeatSelection(seat);
         }
+
+        // アレルギー情報を基にスタイルを更新
+        const groupData = groupAssignmentsData[assignedSeats[seatLetter]];
+        if (groupData && groupData.seatAllergies && groupData.seatAllergies[seatLetter]) {
+            if (groupData.seatAllergies[seatLetter] !== 'no') {
+                seat.classList.add('allergy-marked'); // 線を追加
+                seat.style.color = 'red'; // 赤文字を設定
+            } else {
+                seat.classList.remove('allergy-marked'); // 線を削除
+                seat.style.color = ''; // 色をリセット
+            }
+        } else {
+            seat.classList.remove('allergy-marked'); // 線を削除
+            seat.style.color = ''; // 色をリセット
+        }
     });
 }
+
+
 
 
 // モーダルを閉じる

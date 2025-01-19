@@ -206,6 +206,18 @@
             align-items: center;
             cursor: pointer;
         }
+
+        .seat.allergy-marked {
+            text-decoration: line-through;
+            color: red;
+            /* 赤文字にする */
+        }
+
+        .seat:not(.allergy-marked) {
+            text-decoration: none;
+            color: inherit;
+            /* 親要素の色を引き継ぐ */
+        }
     </style>
     <script src="/socket.io/socket.io.js"></script>
 </head>
