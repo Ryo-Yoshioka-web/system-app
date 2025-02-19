@@ -32,6 +32,12 @@ app.get('/download-assignments', (req, res) => {
     res.download(path.join(__dirname, 'groupAssignments.json'), 'groupAssignments.json');
 });
 
+app.get('/groups', (req, res) => {
+    console.log("現在の groupAssignments:", groupAssignments); // デバッグ用
+
+    res.json(groupAssignments);
+});
+
 let groups = {};
 
 io.on('connection', (socket) => {
@@ -88,31 +94,63 @@ io.on('connection', (socket) => {
         showCourseModal();
     });
 
-    socket.on('assign courses', async ({ group, courses }) => {
-        if (!groupAssignments[group]) return;
-        if (!groupAssignments[group].seatCourses) groupAssignments[group].seatCourses = {};
-        if (!groupAssignments[group].seatAllergies) groupAssignments[group].seatAllergies = {};
-        if (!groupAssignments[group].seatNotes) groupAssignments[group].seatNotes = {};
-        console.log("-------------------------------");
-        console.log(courses);
-        console.log(group);
-        console.log("-------------------------------");
+    socket.on('assign courses', async ({ group, courses, allergy, memo, plate }) => {
+        if (!groupAssignments[group]) {
+            groupAssignments[group] = {
+                seats: [],
+                seatCourses: {},
+                groupAllergy: 'なし',
+                groupMemo: '',
+                groupPlate: 'なし' // ✅ プレート情報を追加（グループ単位）
+            };
+        }
 
-        courses.forEach(({ seat, course, allergy, memo }) => {  // アレルギーとメモも取得
+        if (!groupAssignments[group].seatCourses) {
+            groupAssignments[group].seatCourses = {};
+        }
+
+        // ✅ 選ばれた席を保存
+        const selectedSeats = courses.map(({ seat }) => seat);
+        groupAssignments[group].seats = selectedSeats;
+
+        // ✅ 各席のコースを保存
+        courses.forEach(({ seat, course }) => {
             if (!seat || !course) return;
             groupAssignments[group].seatCourses[seat] = course;
-            groupAssignments[group].seatAllergies[seat] = allergy || 'no';  // アレルギーを追加
-            groupAssignments[group].seatNotes[seat] = memo || '';  // メモを追加
         });
 
+        // ✅ グループ単位の情報を保存
+        groupAssignments[group].groupAllergy = allergy || 'なし';
+        groupAssignments[group].groupMemo = memo || '';
+        groupAssignments[group].groupPlate = plate || 'なし'; // ✅ プレート情報を保存
+
+        console.log("保存されたデータ:", groupAssignments[group]); // デバッグ用
+
         try {
-            // データの保存と全クライアントへのブロードキャスト
             await saveGroupAssignments();
-            console.log('コース割り当てデータ保存完了');
             io.emit('update group assignments', groupAssignments);
         } catch (error) {
             console.error('データ保存エラー:', error);
         }
+    });
+
+
+
+
+    socket.on('assign group settings', async ({ group, course, memo, allergies }) => {
+        if (!groupAssignments[group]) {
+            groupAssignments[group] = {};
+        }
+
+        // グループごとの設定を保存
+        groupAssignments[group].course = course;
+        groupAssignments[group].memo = memo;
+        groupAssignments[group].allergies = allergies;
+
+        await saveGroupAssignments();
+
+        // クライアントに更新を通知
+        io.emit('update group assignments', groupAssignments);
     });
 
 
@@ -139,45 +177,35 @@ io.on('connection', (socket) => {
         console.log(groupAssignmentsData);  // データが正しく更新されたか確認
     });
 
-    socket.on('mark dish as complete', async ({ group, seat, course, dish, userType }) => {
-        const groupData = groupAssignments[group];
-        console.log("受信データ:", { group, seat, course, dish, userType });
-        if (!groupData || !groupData.seatCourses) {
-            console.warn("グループデータが存在しません");
+    socket.on('mark dish as complete', async ({ group, dish, userType }) => {
+        if (!groupAssignments[group]) {
+            console.warn(`⚠️ グループ ${group} が見つかりません`);
             return;
         }
 
-        // `completed`オブジェクトの初期化
-        if (!groupData.completed) groupData.completed = {};
-        if (!groupData.completed[seat]) groupData.completed[seat] = {};
-        if (!groupData.completed[seat][course]) groupData.completed[seat][course] = [];
+        if (!groupAssignments[group].completed) {
+            groupAssignments[group].completed = [];
+        }
 
-        // 既に完了済みの場合はスキップ
-        if (groupData.completed[seat][course].includes(dish)) {
-            console.warn("既に完了済みの料理です:", dish);
+        // 既に完了している場合はスキップ
+        if (groupAssignments[group].completed.some(d => d.dish === dish)) {
+            console.warn(`⚠️ 既に完了済みの料理です: ${dish}`);
             return;
         }
 
-        // 完了リストへの追加
-        groupData.completed[seat][course].push({ dish, userType });
-        console.log("更新されたデータ:", groupData);
+        // ✅ 完了リストに追加
+        groupAssignments[group].completed.push({ dish, userType });
 
-        // データ保存（永続化）
         try {
             await saveGroupAssignments();
-            console.log("データ保存完了");
+            console.log(`✅ データ保存完了: ${dish} を ${group} に記録`);
         } catch (error) {
-            console.log(groupData);
-
-            console.error("データ保存エラー:", error);
+            console.error("❌ データ保存エラー:", error);
         }
 
-        console.log(groupAssignments);
-
-
-        // 全クライアントへ更新通知
         io.emit('update group assignments', groupAssignments);
     });
+
 
     socket.on('update group assignments', (assignments) => {
         groupAssignmentsData = assignments;

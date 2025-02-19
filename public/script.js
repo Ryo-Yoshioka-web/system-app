@@ -11,23 +11,24 @@ let completedDishes = {};
 let groupColors = {};
 
 const fixedGroupColors = {
-    Group1: '#add8e6',  // 薄い青
-    Group2: '#90ee90',  // 薄い緑
-    Group3: '#ffcccb',  // 薄い赤
-    Group4: '#ffffe0',  // 薄い黄色
-    Group5: '#dda0dd',  // 薄い紫
-    Group6: '#87cefa',  // スカイブルー
-    Group7: '#f0e68c',  // カーキ
-    Group8: '#ffc0cb',  // ピンク
-    Group9: '#e6e6fa',  // 薄いラベンダー
+    Group1: '#add8e6', // 薄い青
+    Group2: '#90ee90', // 薄い緑
+    Group3: '#ffcccb', // 薄い赤
+    Group4: '#ffffe0', // 薄い黄色
+    Group5: '#dda0dd', // 薄い紫
+    Group6: '#87cefa', // スカイブルー
+    Group7: '#f0e68c', // カーキ
+    Group8: '#ffc0cb', // ピンク
+    Group9: '#e6e6fa', // 薄いラベンダー
     Group10: '#98fb98', // 薄いパステルグリーン
-    Group11: '#ffdab9', // ピーチパフ
-    Group12: '#b0e0e6', // パウダーブルー
-    Group13: '#ffe4b5', // モカ
-    Group14: '#d8bfd8', // シスリアン
-    Group15: '#bc8f8f', // ロージーブラウン
 };
 
+const courseDishes = {
+    OMAKASE: ['ペアリング', '前菜', 'しょうゆ', '寿司', 'とんかつ', 'ステーキ', 'すきやき', '出汁', '鰻', 'プレート'],
+    WAGYU: ['ペアリング', '前菜', 'しょうゆ', '寿司', 'とんかつ', 'ステーキ', 'すきやき', '出汁', '鰻', 'プレート'],
+    OSAKA: ['ペアリング', '前菜', 'しょうゆ', '寿司', 'とんかつ', 'ラーメン', 'すきやき', '出汁', '鰻', 'プレート'],
+    KIDS: ['xxx', 'xx']
+};
 
 
 const userType = localStorage.getItem('userType');
@@ -87,9 +88,27 @@ function toggleSeatSelection(seat) {
 }
 
 function assignToGroup() {
-    const selectedGroup = groupSelect.value;
-    if (!selectedGroup || selectedSeats.length === 0) {
-        alert('グループと席を選択してください');
+    if (selectedSeats.length === 0) {
+        alert('席を選択してください');
+        return;
+    }
+
+    let selectedGroup = groupSelect.value;
+
+    // グループ未選択の場合は自動的に空いているグループを選択
+    if (!selectedGroup) {
+        const existingGroups = Object.keys(groupAssignmentsData);
+        for (let i = 1; i <= 15; i++) {
+            const groupName = `Group${i}`;
+            if (!existingGroups.includes(groupName)) {
+                selectedGroup = groupName;
+                break;
+            }
+        }
+    }
+
+    if (!selectedGroup) {
+        alert('利用可能なグループがありません');
         return;
     }
 
@@ -102,7 +121,7 @@ function assignToGroup() {
         seat.classList.remove('selected');
     });
     selectedSeats = [];
-    groupSelect.value = '';
+    groupSelect.value = ''; // 選択をリセット
 }
 
 
@@ -123,34 +142,6 @@ function resetGroup(group) {
     }
 }
 
-
-
-function createGroupOptions(numGroups) {
-    const groupSelect = document.getElementById('groupSelect');
-    groupSelect.innerHTML = '<option value="">グループを選択</option>';
-
-    // 各グループに対して「なし」と「あり」の選択肢を作成
-    for (let i = 1; i <= numGroups; i++) {
-        // 「なし」のグループ
-        const optionNone = document.createElement('option');
-        optionNone.value = `Group${i}`;
-        optionNone.textContent = `グループ${i}`;
-        groupSelect.appendChild(optionNone);
-
-        // 「あり」のグループ
-        const optionYes = document.createElement('option');
-        optionYes.value = `Group${i}/プレートあり`;
-        optionYes.textContent = `グループ${i}/プレートあり`;
-
-
-        // 「あり」の場合に色を付ける
-        optionYes.style.backgroundColor = '#ffff0061'; // 好きな色に変更可能
-        groupSelect.appendChild(optionYes);
-    }
-}
-
-// 例: 10個のグループを作成
-createGroupOptions(15);
 
 
 
@@ -192,53 +183,44 @@ socket.on('init group assignments', (assignments) => {
     updateGroupAssignmentsDisplay(assignments);
 });
 
-function openCourseModal(group) {
-    console.log(group);
+function openSeatSettingsModal(group) {
     selectedGroupForCourses = group;
+    localStorage.setItem('selectedGroupForCourses', group);
+    const modalContent = document.getElementById('courseInputs');
+    modalContent.innerHTML = '';
 
     const groupData = groupAssignmentsData[group];
-    const seats = groupData?.seats;
-    if (!Array.isArray(seats) || seats.length === 0) {
-        alert(`${group}には割り当てられた席がありません`);
-        return;
-    }
+    const seats = groupData?.seats || [];
 
-    const courseInputs = document.getElementById('courseInputs');
-    courseInputs.innerHTML = '';
-    seats.forEach((seat, index) => {
-        const inputDiv = document.createElement('div');
-        inputDiv.innerHTML = `
-            <label for="course-${seat}">${seat}のコース:</label>
-            <select id="course-${seat}" data-seat="${seat}">
+    seats.forEach(seat => {
+        modalContent.innerHTML += `
+            <label for="course-${seat}">${seat} のコース:</label>
+            <select id="course-${seat}">
                 <option value="">選択してください</option>
                 <option value="OMAKASE">OMAKASE</option>
                 <option value="WAGYU">WAGYU</option>
                 <option value="OSAKA">OSAKA</option>
                 <option value="KIDS">KIDS</option>
             </select>
-            <label>アレルギー:</label>
-            <label><input type="checkbox" name="allergy-${seat}" value="生卵" onclick="handleAllergySelection(this, '${seat}')"> 生卵</label>
-            <label><input type="checkbox" name="allergy-${seat}" value="小麦" onclick="handleAllergySelection(this, '${seat}')"> 小麦</label>
-            <label><input type="checkbox" name="allergy-${seat}" value="牛乳" onclick="handleAllergySelection(this, '${seat}')"> 牛乳</label>
-            <label><input type="checkbox" name="allergy-${seat}" value="エビ" onclick="handleAllergySelection(this, '${seat}')"> エビ</label>
-            <label><input type="checkbox" name="allergy-${seat}" value="サーモン" onclick="handleAllergySelection(this, '${seat}')"> サーモン</label>
-            <label><input type="checkbox" name="allergy-${seat}" value="マグロ" onclick="handleAllergySelection(this, '${seat}')"> マグロ</label>
-            <label><input type="checkbox" name="allergy-${seat}" value="牛" onclick="handleAllergySelection(this, '${seat}')"> 牛</label>
-            <label><input type="checkbox" name="allergy-${seat}" value="豚" onclick="handleAllergySelection(this, '${seat}')"> 豚</label>
-            <label><input type="checkbox" name="allergy-${seat}" value="鰻" onclick="handleAllergySelection(this, '${seat}')"> 鰻</label>
-            <textarea id="memo-${seat}" placeholder="メモを入力してください"></textarea>
-        `;
-        courseInputs.appendChild(inputDiv);
 
-        const courseSelect = inputDiv.querySelector('select');
-        courseSelect.addEventListener('change', function () {
-            const selectedCourse = this.value;
-            selectCourse(selectedCourse, group);  // グループを引数として渡す
-        });
+            <label>プレート:</label>
+            <select id="plate-${seat}">
+                <option value="なし">なし</option>
+                <option value="あり">あり</option>
+            </select>
+
+            <label for="memo-${seat}">メモ:</label>
+            <textarea id="memo-${seat}" placeholder="メモを入力してください"></textarea>
+
+            <label>アレルギー:</label>
+            <input type="text" id="allergy-${seat}" placeholder="例: 小麦, エビ">
+            <hr>
+        `;
     });
 
     document.getElementById('courseModal').style.display = 'block';
 }
+
 
 function handleAllergySelection(clickedCheckbox, seat) {
     const allergyCheckboxes = document.querySelectorAll(`input[name="allergy-${seat}"]`);
@@ -264,135 +246,239 @@ function handleAllergySelection(clickedCheckbox, seat) {
     }
 }
 
+function openSeatSettingsModal(group) {
+    selectedGroupForCourses = group;
+    localStorage.setItem('selectedGroupForCourses', group);
+    const modalContent = document.getElementById('courseInputs');
+    modalContent.innerHTML = '';
 
-function assignCourses() {
-    const selects = document.querySelectorAll('#courseInputs select');
-    const courses = Array.from(selects).map(select => {
-        const seat = select.dataset.seat;
-        const courseValue = select.value;
-        // 選択されたアレルギー項目を取得
-        const allergies = Array.from(document.querySelectorAll(`input[name="allergy-${seat}"]:checked`))
-            .map(checkbox => checkbox.value)
-            .join(', ');
-        const memo = document.getElementById(`memo-${seat}`).value.trim();  // メモの取得
-        return { seat, course: courseValue, allergy: allergies, memo };  // メモも含める
-    }).filter(course => course.course);  // コースが選択されているもののみフィルタリング
+    const groupData = groupAssignmentsData[group] || {};
+    const seats = groupData.seats || [];
+    const seatCourses = groupData.seatCourses || {};
 
-    socket.emit('assign courses', { group: selectedGroupForCourses, courses });
+    seats.forEach(seat => {
+        const selectedCourse = seatCourses[seat] || "";
 
-    // モーダルを閉じる
+        modalContent.innerHTML += `
+            <div>
+                <label for="course-${seat}">${seat} のコース:</label>
+                <select id="course-${seat}">
+                    <option value="">選択してください</option>
+                    <option value="OMAKASE" ${selectedCourse === "OMAKASE" ? "selected" : ""}>OMAKASE</option>
+                    <option value="WAGYU" ${selectedCourse === "WAGYU" ? "selected" : ""}>WAGYU</option>
+                    <option value="OSAKA" ${selectedCourse === "OSAKA" ? "selected" : ""}>OSAKA</option>
+                    <option value="KIDS" ${selectedCourse === "KIDS" ? "selected" : ""}>KIDS</option>
+                </select>
+            </div>
+            <hr>
+        `;
+    });
+
+    // ✅ 既存のプレート情報を取得
+    const selectedPlate = groupData.groupPlate || "なし";
+
+    modalContent.innerHTML += `
+        <div>
+            <label for="group-plate">プレート:</label>
+            <select id="group-plate">
+                <option value="なし" ${selectedPlate === "なし" ? "selected" : ""}>なし</option>
+                <option value="あり" ${selectedPlate === "あり" ? "selected" : ""}>あり</option>
+            </select>
+        </div>
+    `;
+
+    // ✅ 既存のアレルギー情報を取得（カンマ区切り）
+    const existingAllergy = groupData.groupAllergy ? groupData.groupAllergy.split(', ') : ["なし"];
+    const allergyOptions = ["なし", "生卵", "小麦", "牛乳", "エビ", "サーモン", "マグロ", "牛", "豚", "鰻"];
+
+    modalContent.innerHTML += `
+        <div>
+            <label>グループのアレルギー:</label>
+            <div id="group-allergy">
+                ${allergyOptions.map(allergy => `
+                    <label class="allergy-option">
+                        <input type="checkbox" name="allergy" value="${allergy}" 
+                            ${existingAllergy.includes(allergy) ? "checked" : ""} 
+                            onchange="handleAllergySelection(this)">
+                        ${allergy}
+                    </label>
+                `).join('')}
+            </div>
+        </div>
+    `;
+
+    modalContent.innerHTML += `
+        <div>
+            <label for="group-memo">メモ:</label>
+            <textarea id="group-memo" placeholder="メモを入力してください">${groupData.groupMemo || ""}</textarea>
+        </div>
+    `;
+
+    document.getElementById('courseModal').style.display = 'block';
+}
+
+
+function handleAllergySelection(clickedCheckbox) {
+    const allergyCheckboxes = document.querySelectorAll('input[name="allergy"]');
+
+    if (clickedCheckbox.value === "なし" && clickedCheckbox.checked) {
+        // ✅ 「なし」を選択した場合、他のチェックボックスを解除
+        allergyCheckboxes.forEach(checkbox => {
+            if (checkbox !== clickedCheckbox) checkbox.checked = false;
+        });
+    } else if (clickedCheckbox.value !== "なし") {
+        // ✅ 他のアレルギー項目を選択した場合、「なし」を解除
+        const noneCheckbox = Array.from(allergyCheckboxes).find(checkbox => checkbox.value === "なし");
+        if (noneCheckbox) noneCheckbox.checked = false;
+    }
+}
+
+function assignSeatCourses() {
+    const group = selectedGroupForCourses || localStorage.getItem('selectedGroupForCourses');
+    if (!group) {
+        alert("グループが選択されていません");
+        return;
+    }
+
+    const groupData = groupAssignmentsData[group];
+    const seats = groupData?.seats || [];
+    const courses = [];
+
+    seats.forEach(seat => {
+        const courseElement = document.getElementById(`course-${seat}`);
+        if (courseElement) {
+            const course = courseElement.value;
+            if (course) {
+                courses.push({ seat, course });
+            }
+        }
+    });
+
+    const plateElement = document.getElementById('group-plate');
+    const plate = plateElement ? plateElement.value : "なし";
+
+    // ✅ チェックされたアレルギーを取得
+    const allergyCheckboxes = document.querySelectorAll('input[name="allergy"]:checked');
+    const selectedAllergies = Array.from(allergyCheckboxes).map(checkbox => checkbox.value);
+
+    // ✅ もし「なし」が選択されていたら、他のアレルギーを無視
+    const allergy = selectedAllergies.includes("なし") ? "なし" : selectedAllergies.join(', ');
+
+    const memoElement = document.getElementById('group-memo');
+    const memo = memoElement ? memoElement.value : "";
+
+    if (courses.length === 0) {
+        alert("コースを割り当ててください");
+        return;
+    }
+
+    // ✅ サーバーにデータを送信
+    socket.emit('assign courses', { group, courses, allergy, memo, plate });
+
     document.getElementById('courseModal').style.display = 'none';
 }
 
-function createCompleteButton(dishElement, seat, course, dish) {
+
+
+// **料理の完了ボタン**
+function createCompleteButton(dishElement, group, dish) {
     const completeButton = document.createElement('button');
     completeButton.textContent = '完了';
     completeButton.style.marginLeft = '10px';
-    completeButton.onclick = () => markAsComplete(dishElement, seat, course, dish);
+
+    completeButton.onclick = () => markAsComplete(dishElement, group, dish);
     return completeButton;
 }
 
+// **料理を完了としてマーク**
+function markAsComplete(dishElement, group, dish) {
+    dishElement.style.textDecoration = 'line-through';
+    dishElement.style.color = '#888';
+    const completeButton = dishElement.querySelector('button');
+    completeButton.disabled = true;
 
+    // ユーザータイプを取得
+    const userType = localStorage.getItem('userType') || 'A';
 
+    // サーバーへ完了通知を送信
+    socket.emit('mark dish as complete', { group, dish, userType });
 
-const courseDishes = {
-    OMAKASE: ['Drink pairing', 'Starters', 'Sushi', 'Tonkatsu', 'WAGYU steak', 'Sukiyaki', 'Eel', 'Dessert'],
-    WAGYU: ['Starters', 'Sushi', 'Tonkatsu', 'WAGYU steak', 'Sukiyaki', 'Eel', 'Dessert'],
-    OSAKA: ['Starters', 'Sushi', 'Tonkatsu', 'Ramen', 'Sukiyaki', 'Eel', 'Dessert'],
-    KIDS: ['xxx', 'xx']
-};
+    console.log(`完了: グループ ${group}, 料理 ${dish}`);
 
-
-function openCourseStatusModal(group) {
-    const groupData = groupAssignmentsData[group];
-    const seatCourses = groupData?.seatCourses || {};
-
-    const courseStatusList = document.getElementById('courseStatusList');
-    courseStatusList.innerHTML = '';
-
-    if (Object.keys(seatCourses).length === 0) {
-        courseStatusList.innerHTML = '<p>このグループにはコースが割り当てられていません。</p>';
-    } else {
-        Object.entries(seatCourses).forEach(([seat, course]) => {
-            const listItemContainer = document.createElement('div');
-            const listItem = document.createElement('p');
-            listItem.textContent = `${seat}: ${course}`;
-            courseStatusList.appendChild(listItemContainer);  // <div>の中に<p>を追加
-            listItemContainer.appendChild(listItem);
-
-            const dishList = document.createElement('ul');
-            const dishes = courseDishes[course] || [];  // ここで直接取得
-
-            dishes.forEach((dish, index) => {
-                const dishItem = document.createElement('li');
-                const completeButton = createCompleteButton(dishItem, seat, course, dish);
-                dishItem.textContent = `${index + 1}. ${dish}`;
-
-                const completedDishes = groupData.completed?.[seat]?.[course] || [];
-                const completedDish = completedDishes.find(d => d.dish === dish);
-
-                if (completedDish) {
-                    dishItem.style.textDecoration = 'line-through';
-                    dishItem.style.color = '#888';
-                    completeButton.style.backgroundColor = completedDish.userType === 'A' ? 'green' : 'blue';
-                }
-
-                dishItem.appendChild(completeButton);
-                dishList.appendChild(dishItem);
-            });
-
-            listItemContainer.appendChild(dishList);
-        });
-    }
-
-    document.getElementById('courseStatusModal').style.display = 'block';
+    // 画面上のリストを即座に更新
+    setTimeout(fetchAndUpdateCourseStatus, 500);
 }
 
 function updateGroupAssignmentsDisplay(assignments) {
     groupAssignments.innerHTML = '';
-    assignedSeats = {};
+    assignedSeats = {};  // ✅ 修正：割り当てられた座席情報を初期化
     groupAssignmentsData = assignments;
-    console.log(assignments);
 
+    console.log("受信したデータ:", assignments); // ✅ デバッグ用
 
     for (const [group, data] of Object.entries(assignments)) {
         const groupDiv = document.createElement('div');
+        groupDiv.classList.add('group-box');
+
         const assignment = document.createElement('p');
-        assignment.textContent = `${group}: ${data.seats.join(', ')}`;
-        selectedGroupForCourses = group;
+        assignment.textContent = `${data.seats ? data.seats.join(', ') : 'なし'}`;
         groupDiv.appendChild(assignment);
 
         if (!groupColors[group]) {
-            groupColors[group] = fixedGroupColors[group]
+            groupColors[group] = fixedGroupColors[group] || getRandomColor();
         }
         groupDiv.style.backgroundColor = groupColors[group];
 
         if (data.seatCourses) {
             const courseList = document.createElement('ul');
             for (const seat in data.seatCourses) {
-                const course = data.seatCourses[seat];
-                const allergy = data.seatAllergies?.[seat] || '未設定';
-                const memo = data.seatNotes?.[seat] || 'なし';
+                let courseData = data.seatCourses[seat]; // ✅ `{ course, plate }` or `"OMAKASE"`
+                let course = "未選択"; // デフォルト値
+
+                // ✅ コース情報のデータ構造をチェック
+                if (typeof courseData === "object" && courseData !== null) {
+                    course = courseData.course || "未選択"; // `{ course, plate }` の場合
+                } else if (typeof courseData === "string") {
+                    course = courseData; // `"OMAKASE"` のように直接格納されている場合
+                }
 
                 const courseItem = document.createElement('li');
                 courseItem.textContent = `${seat}: ${course}`;
-
-                const allergyInfo = document.createElement('p');
-                allergyInfo.textContent = `アレルギー: ${allergy}`;
-
-                const memoInfo = document.createElement('p');
-                memoInfo.textContent = `メモ: ${memo}`;
-
                 courseList.appendChild(courseItem);
-                courseList.appendChild(allergyInfo);
-                courseList.appendChild(memoInfo);
+
+                // ✅ 修正：座席の割り当てを保存
+                assignedSeats[seat] = group;
             }
             groupDiv.appendChild(courseList);
         }
 
+        // ✅ グループ単位の情報を表示
+        const allergyText = data.groupAllergy !== undefined ? data.groupAllergy : 'なし';
+        const memoText = data.groupMemo !== undefined ? data.groupMemo : 'なし';
+        const plateText = data.groupPlate !== undefined ? data.groupPlate : 'なし'; // ✅ グループのプレート情報のみ表示
+
+        const allergyInfo = document.createElement('p');
+        allergyInfo.textContent = `アレルギー: ${allergyText}`;
+        allergyInfo.style.color = 'red';
+
+        const memoInfo = document.createElement('p');
+        memoInfo.textContent = `メモ: ${memoText}`;
+
+        const plateInfo = document.createElement('p');
+        plateInfo.textContent = `プレート: ${plateText}`; // ✅ グループ単位でプレートを表示
+
+        groupDiv.appendChild(allergyInfo);
+        groupDiv.appendChild(memoInfo);
+        groupDiv.appendChild(plateInfo);
+
+        if (allergyText !== 'なし') {
+            groupDiv.style.border = '3px solid red';
+            groupDiv.style.backgroundColor = '#ffcccc';
+        }
+
         const assignCourseButton = document.createElement('button');
         assignCourseButton.textContent = 'コースを割り当て';
-        assignCourseButton.onclick = () => openCourseModal(group);
+        assignCourseButton.onclick = () => openSeatSettingsModal(group);
         groupDiv.appendChild(assignCourseButton);
 
         const resetButton = document.createElement('button');
@@ -400,22 +486,13 @@ function updateGroupAssignmentsDisplay(assignments) {
         resetButton.onclick = () => resetGroup(group);
         groupDiv.appendChild(resetButton);
 
-        const checkCourseButton = document.createElement('button');
-        checkCourseButton.textContent = 'コース確認';
-        checkCourseButton.onclick = () => openCourseStatusModal(group);
-        groupDiv.appendChild(checkCourseButton);
-
         groupAssignments.appendChild(groupDiv);
-
-        if (data.seats) {
-            data.seats.forEach(seat => {
-                assignedSeats[seat] = group;
-            });
-        }
     }
-    updateSeatStyles();
-    highlightGroupAssignments();
+
+    updateSeatStyles(); // ✅ 修正：座席のスタイルを更新
 }
+
+
 
 function highlightGroupAssignments() {
     const groupAssignments = document.getElementById('groupAssignments');
@@ -539,62 +616,6 @@ function startDishTimers(group, seat, course) {
         }, delay);
     });
 }
-
-function markAsComplete(dishElement, seat, course, dish) {
-    dishElement.style.textDecoration = 'line-through';
-    dishElement.style.color = '#888';
-    const completeButton = dishElement.querySelector('button');
-
-    // ボタンの無効化をユーザータイプに依存させない
-    completeButton.disabled = true;
-
-    console.log(userType);
-
-    // ユーザータイプによってボタンの色を変更
-    if (userType === 'A') {
-        completeButton.style.backgroundColor = 'green';  // ユーザーAの場合、緑
-    } else if (userType === 'B') {
-        completeButton.style.backgroundColor = 'blue';   // ユーザーBの場合、青
-    }
-
-    console.log(selectedGroupForCourses);
-
-    const group = selectedGroupForCourses;
-    const timerId = `${group}-${seat}-${course}-${dish}`;
-
-    // タイマー解除（時間前に完了した場合）
-    if (dishTimers[timerId]) {
-        clearTimeout(dishTimers[timerId]);
-        delete dishTimers[timerId];
-    }
-
-    // 完了状態を更新
-    if (!completedDishes[group]) completedDishes[group] = {};
-    if (!completedDishes[group][seat]) completedDishes[group][seat] = {};
-    if (!completedDishes[group][seat][course]) completedDishes[group][seat][course] = [];
-    completedDishes[group][seat][course].push(dish);
-
-    // 席の色をリセット
-    const seatElement = Array.from(Tableseats).find(seatDiv => seatDiv.textContent === seat);
-    if (seatElement && seatElement.classList.contains('timed-out')) {
-        seatElement.classList.remove('timed-out');  // 赤色解除
-    }
-
-    // 進捗をサーバーに送信
-    socket.emit('mark dish as complete', { group: selectedGroupForCourses, seat, course, dish, userType });
-
-    // コースの全ての料理が完了したかチェック
-    const allDishesCompleted = (courseElement) => {
-        const dishes = courseElement.querySelectorAll('li');
-        return Array.from(dishes).every(dish => dish.style.textDecoration === 'line-through');
-    };
-
-    const courseElement = dishElement.closest('ul');
-    if (allDishesCompleted(courseElement)) {
-        alert(`${seat}の${course}コースが完了しました！`);
-    }
-}
-
 
 
 function showNotification(message) {

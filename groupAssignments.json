@@ -1,22 +1,17 @@
 {
-  "Group1/プレートあり": {
-    "seats": [
-      "7",
-      "6"
-    ]
-  },
   "Group1": {
     "seats": [
+      "9",
       "8",
-      "9"
-    ]
-  },
-  "Group15": {
-    "seats": [
-      "5",
-      "D2",
-      "C2",
-      "4"
-    ]
+      "7"
+    ],
+    "seatCourses": {
+      "7": "WAGYU",
+      "8": "WAGYU",
+      "9": "WAGYU"
+    },
+    "groupAllergy": "牛乳, マグロ",
+    "groupMemo": "ad",
+    "groupPlate": "なし"
   }
 }

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>グループ一覧</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="groupList.js" defer></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f8f8f8;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        #groupList {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .group-item {
+            background: #fff;
+            border: 2px solid #333;
+            padding: 15px;
+            width: 300px;
+            text-align: left;
+            box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+
+        .group-header {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .group-info {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .dish-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .dish-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px dashed #ccc;
+        }
+
+        .complete-button {
+            padding: 5px 10px;
+            font-size: 12px;
+            border: none;
+            background: #28a745;
+            color: white;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .completed {
+            text-decoration: line-through;
+            color: #888;
+            background: #ddd;
+        }
+
+        .memo-section {
+            margin-top: 10px;
+            font-size: 14px;
+            padding: 10px;
+            background: #f5f5f5;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        #register {
+            margin-top: 30px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #register:hover {
+            background: #0056b3;
+        }
+
+        .course-counts {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 10px;
+            padding: 5px;
+            background: #f5f5f5;
+            border-radius: 5px;
+        }
+
+        .course-count {
+            font-weight: bold;
+            padding: 5px 10px;
+            background: #e0e0e0;
+            border-radius: 3px;
+        }
+
+        /* .delete-button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        .delete-button:hover {
+            background: darkred;
+        } */
+    </style>
+</head>
+
+<body>
+    <h1>登録済みグループ一覧</h1>
+    <div id="groupList"></div>
+    <button id="register">登録ページに戻る</button>
+    <script>
+        document.getElementById('register').addEventListener('click', () => {
+            window.location.href = 'seatSelection.html';
+        });
+    </script>
+</body>
+
+</html>

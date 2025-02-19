@@ -130,7 +130,7 @@
 
         #groupAssignments div {
             border: 1px solid black;
-            width: 45%;
+            width: 30%;
             /* 2つの要素が横並びに収まる幅 */
             padding: 20px;
             box-sizing: border-box;
@@ -225,13 +225,11 @@
 <body>
     <div id="userInfo"></div>
     <div id="seatContainer"></div>
-    <select id="groupSelect">
-        <option value="">グループを選択</option>
-        <option value="Group1">グループ1</option>
-        <option value="Group2">グループ2</option>
-        <option value="Group3">グループ3</option>
-    </select>
+    <div id="groupSelect">
+    </div>
     <button onclick="assignToGroup()">グループに割り当て</button>
+    <button id="group-link">一覧を見る</button>
+
     <div id="groupAssignments"></div>
 
     <div id="courseModal" class="modal">
@@ -239,7 +237,7 @@
             <span id="closeModal" style="cursor: pointer;">&times;</span>
             <h3>コースを割り当て</h3>
             <div id="courseInputs"></div>
-            <button onclick="assignCourses()">コースを割り当て</button>
+            <button onclick="assignSeatCourses()">コースを割り当て</button>
         </div>
     </div>
 
@@ -253,7 +251,11 @@
         </div>
     </div>
 
-
+    <script>
+        document.getElementById('group-link').addEventListener('click', () => {
+            window.location.href = 'groupList.html';  // ログイン後に座席選択画面に遷移
+        });
+    </script>
     <script src="script.js"></script>
 </body>
 
