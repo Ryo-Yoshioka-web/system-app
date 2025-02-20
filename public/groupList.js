@@ -80,9 +80,11 @@ async function fetchGroupList() {
                 dishList = ['ペアリング', '前菜', 'しょうゆ', '寿司', 'とんかつ', 'ステーキ', 'すきやき', '出汁', '鰻', 'ラーメン', 'デザート'];
             }
 
-            // ✅ プレートが「あり」ならデザートの後に追加
             if (plateOption === "あり") {
-                dishList.push("プレート");
+                const dessertIndex = dishList.indexOf("デザート");
+                if (dessertIndex !== -1) {
+                    dishList.splice(dessertIndex, 0, "プレート");
+                }
             }
 
             const dishUl = document.createElement('ul');
@@ -96,6 +98,8 @@ async function fetchGroupList() {
                     dishItem.style.color = 'red';
                 } else if (dish === 'ペアリング' || dish === 'OMAKASE') {
                     dishItem.style.color = 'blue';
+                } else if (dish === 'プレート') {
+                    dishItem.style.color = 'green'; // ✅ プレートを緑色に設定
                 }
 
                 const completeButton = createCompleteButton(dishItem, group, dish);

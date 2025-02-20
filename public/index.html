@@ -6,12 +6,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ログイン</title>
+    <style>
+        .login {
+            font-size: 20px;
+            margin-right: 30px;
+        }
+    </style>
 </head>
 
 <body>
     <h1>ユーザーログイン</h1>
-    <button id="loginA">Aユーザーとしてログイン</button>
-    <button id="loginB">Bユーザーとしてログイン</button>
+    <button id="loginA" class="login">キッチン</button>
+    <button id="loginB" class="login">ホール</button>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>

@@ -1,17 +1,55 @@
 {
   "Group1": {
     "seats": [
-      "9",
-      "8",
-      "7"
+      "A2",
+      "B2"
     ],
     "seatCourses": {
-      "7": "WAGYU",
-      "8": "WAGYU",
-      "9": "WAGYU"
+      "A2": "OMAKASE",
+      "B2": "OSAKA"
     },
-    "groupAllergy": "牛乳, マグロ",
-    "groupMemo": "ad",
+    "groupAllergy": "なし",
+    "groupMemo": "",
+    "groupPlate": "なし",
+    "completed": [
+      {
+        "dish": "プレート",
+        "userType": "A"
+      },
+      {
+        "dish": "ステーキ",
+        "userType": "A"
+      },
+      {
+        "dish": "ラーメン",
+        "userType": "A"
+      }
+    ]
+  },
+  "Group2": {
+    "seats": [
+      "2",
+      "1"
+    ],
+    "seatCourses": {
+      "1": "WAGYU",
+      "2": "OMAKASE"
+    },
+    "groupAllergy": "牛乳, サーモン, マグロ",
+    "groupMemo": "",
     "groupPlate": "なし"
+  },
+  "Group3": {
+    "seats": [
+      "3",
+      "4"
+    ],
+    "seatCourses": {
+      "3": "OSAKA",
+      "4": "OMAKASE"
+    },
+    "groupAllergy": "牛乳, マグロ, 牛, 豚, 鰻",
+    "groupMemo": "",
+    "groupPlate": "あり"
   }
 }
