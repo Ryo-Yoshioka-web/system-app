@@ -66,18 +66,20 @@ async function fetchGroupList() {
             let hasWagyu = courseCounts.WAGYU > 0;
             let hasOmakase = courseCounts.OMAKASE > 0;
 
-            if (hasOsaka && !hasWagyu && !hasOmakase) {
-                dishList = ['前菜', 'しょうゆ', '寿司', 'とんかつ', 'すきやき', '出汁', '鰻', 'ラーメン', 'デザート'];
-            } else if (hasWagyu && !hasOsaka && !hasOmakase) {
-                dishList = ['前菜', 'しょうゆ', '寿司', 'とんかつ', 'ステーキ', 'すきやき', '出汁', '鰻', 'デザート'];
-            } else if (hasOmakase && !hasOsaka && !hasWagyu) {
-                dishList = ['ペアリング', '前菜', 'しょうゆ', '寿司', 'とんかつ', 'ステーキ', 'すきやき', '出汁', '鰻', 'デザート'];
-            } else if (hasOsaka && hasWagyu && hasOmakase) {
+            if (hasOsaka && hasWagyu && hasOmakase) {
                 dishList = ['ペアリング', '前菜', 'しょうゆ', '寿司', 'とんかつ', 'ステーキ', 'すきやき', '出汁', '鰻', 'ラーメン', 'デザート'];
             } else if (hasOsaka && hasWagyu) {
                 dishList = ['前菜', 'しょうゆ', '寿司', 'とんかつ', 'ステーキ', 'すきやき', '出汁', '鰻', 'ラーメン', 'デザート'];
+            } else if (hasOmakase && hasWagyu) {
+                dishList = ['ペアリング', '前菜', 'しょうゆ', '寿司', 'とんかつ', 'ステーキ', 'すきやき', '出汁', '鰻', 'デザート'];
             } else if (hasOmakase && hasOsaka) {
                 dishList = ['ペアリング', '前菜', 'しょうゆ', '寿司', 'とんかつ', 'ステーキ', 'すきやき', '出汁', '鰻', 'ラーメン', 'デザート'];
+            } else if (hasOsaka) {
+                dishList = ['前菜', 'しょうゆ', '寿司', 'とんかつ', 'すきやき', '出汁', '鰻', 'ラーメン', 'デザート'];
+            } else if (hasWagyu) {
+                dishList = ['前菜', 'しょうゆ', '寿司', 'とんかつ', 'ステーキ', 'すきやき', '出汁', '鰻', 'デザート'];
+            } else if (hasOmakase) {
+                dishList = ['ペアリング', '前菜', 'しょうゆ', '寿司', 'とんかつ', 'ステーキ', 'すきやき', '出汁', '鰻', 'デザート'];
             }
 
             if (plateOption === "あり") {
