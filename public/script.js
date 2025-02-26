@@ -178,10 +178,19 @@ socket.on('update group assignments', (assignments) => {
     updateGroupAssignmentsDisplay(assignments);
 });
 
-// 初期グループ割り当て情報を受信
-socket.on('init group assignments', (assignments) => {
+socket.on('connect', () => {
+    console.log("🔄 サーバーに再接続しました。データを取得します...");
+    socket.emit('request group assignments');  // 接続時にデータを要求
+});
+
+socket.on('update group assignments', (assignments) => {
     updateGroupAssignmentsDisplay(assignments);
 });
+
+// 初回ロード時にもデータを要求
+window.onload = () => {
+    socket.emit('request group assignments');
+};
 
 function openSeatSettingsModal(group) {
     selectedGroupForCourses = group;

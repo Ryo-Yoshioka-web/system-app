@@ -23,8 +23,25 @@ function loadGroupAssignments() {
 
 async function saveGroupAssignments() {
     const filePath = path.join(__dirname, 'groupAssignments.json');
-    await fs.writeFileSync(filePath, JSON.stringify(groupAssignments, null, 2));
+    try {
+        await fs.promises.writeFile(filePath, JSON.stringify(groupAssignments, null, 2));
+        console.log("✅ データを保存しました");
+    } catch (error) {
+        console.error("❌ データ保存エラー:", error);
+    }
 }
+
+// サーバー終了時にデータを保存
+process.on('exit', async () => {
+    console.log("🔄 サーバー終了時にデータを保存");
+    await saveGroupAssignments();
+});
+
+process.on('SIGINT', async () => {
+    console.log("🛑 サーバーが終了（Ctrl + C）");
+    await saveGroupAssignments();
+    process.exit();
+});
 
 loadGroupAssignments();
 
@@ -50,6 +67,15 @@ io.on('connection', (socket) => {
         socket.emit('userType', { userType: data.userType });  // ユーザータイプをクライアントに送信
         console.log(`${data.userType}がログインしました`);
     });
+
+    // クライアントからデータ要求があれば送信
+    socket.on('request group assignments', () => {
+        console.log("📨 グループデータを送信:", groupAssignments);
+        socket.emit('update group assignments', groupAssignments);
+    });
+
+    // 初回接続時にも送信
+    socket.emit('update group assignments', groupAssignments);
 
     // 接続時に現在のグループ割り当て情報を送信
     socket.emit('init group assignments', groupAssignments);
