@@ -1,3 +1,9 @@
+const express = require('express');
+const http = require('http');
+const socketIo = require('socket.io');
+const mongoose = require('mongoose');
+const path = require('path');
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
@@ -41,13 +47,9 @@ async function saveGroupAssignments() {
 
 // 初回ロード
 loadGroupAssignments();
-app.get('/download-assignments', (req, res) => {
-    res.download(path.join(__dirname, 'groupAssignments.json'), 'groupAssignments.json');
-});
 
 app.get('/groups', (req, res) => {
     console.log("現在の groupAssignments:", groupAssignments); // デバッグ用
-
     res.json(groupAssignments);
 });
 
