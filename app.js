@@ -11,11 +11,8 @@ const io = socketIo(server);
 mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    ssl: true,
-    sslValidate: true,
-    serverSelectionTimeoutMS: 10000,
-    socketTimeoutMS: 45000,
-    keepAlive: true
+    serverSelectionTimeoutMS: 10000,  // 接続タイムアウト
+    socketTimeoutMS: 45000            // ソケットタイムアウト
 })
 
 const assignmentSchema = new mongoose.Schema({
