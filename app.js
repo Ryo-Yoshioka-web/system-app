@@ -8,7 +8,15 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    ssl: true,
+    sslValidate: true,
+    serverSelectionTimeoutMS: 10000,
+    socketTimeoutMS: 45000,
+    keepAlive: true
+})
 
 const assignmentSchema = new mongoose.Schema({
     group: String,
