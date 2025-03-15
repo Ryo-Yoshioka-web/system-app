@@ -1,60 +1,57 @@
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
-const mongoose = require('mongoose');
+const fs = require('fs');
 const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 10000,  // 接続タイムアウト
-    socketTimeoutMS: 45000            // ソケットタイムアウト
-})
+app.use(express.static('public'));
 
-const assignmentSchema = new mongoose.Schema({
-    group: String,
-    data: Object,
+let groupAssignments = {};  // グループ割り当て情報を保持
+let users = {};  // ユーザー情報を保持（ソケットIDをキーとしてユーザータイプ）
+
+function loadGroupAssignments() {
+    const filePath = path.join(__dirname, 'groupAssignments.json');
+    if (fs.existsSync(filePath)) {
+        const data = fs.readFileSync(filePath);
+        groupAssignments = JSON.parse(data);
+    }
+}
+
+async function saveGroupAssignments() {
+    const filePath = path.join(__dirname, 'groupAssignments.json');
+    try {
+        await fs.promises.writeFile(filePath, JSON.stringify(groupAssignments, null, 2));
+        console.log("✅ データを保存しました");
+    } catch (error) {
+        console.error("❌ データ保存エラー:", error);
+    }
+}
+
+// サーバー終了時にデータを保存
+process.on('exit', async () => {
+    console.log("🔄 サーバー終了時にデータを保存");
+    await saveGroupAssignments();
 });
 
-const GroupAssignment = mongoose.model('GroupAssignment', assignmentSchema);
+process.on('SIGINT', async () => {
+    console.log("🛑 サーバーが終了（Ctrl + C）");
+    await saveGroupAssignments();
+    process.exit();
+});
 
-let groupAssignments = {};
-
-// 🔹 データの読み込み（サーバー起動時）
-async function loadGroupAssignments() {
-    try {
-        const assignments = await GroupAssignment.find();
-        groupAssignments = {};
-        assignments.forEach(item => {
-            groupAssignments[item.group] = item.data;
-        });
-        console.log("✅ MongoDBからデータを読み込みました");
-    } catch (error) {
-        console.error("❌ データの読み込みエラー:", error);
-    }
-}
-
-// 🔹 データの保存
-async function saveGroupAssignments() {
-    try {
-        await GroupAssignment.deleteMany({}); // 既存データを削除
-        const assignments = Object.entries(groupAssignments).map(([group, data]) => ({ group, data }));
-        await GroupAssignment.insertMany(assignments);
-        console.log("✅ MongoDBにデータを保存しました");
-    } catch (error) {
-        console.error("❌ データの保存エラー:", error);
-    }
-}
-
-// 初回ロード
 loadGroupAssignments();
+
+app.get('/download-assignments', (req, res) => {
+    res.download(path.join(__dirname, 'groupAssignments.json'), 'groupAssignments.json');
+});
 
 app.get('/groups', (req, res) => {
     console.log("現在の groupAssignments:", groupAssignments); // デバッグ用
+
     res.json(groupAssignments);
 });
 
